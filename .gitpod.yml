@@ -1,0 +1,9 @@
+tasks:
+  - init: |
+      curl -L https://github.com/odin-lang/Odin/releases/download/dev-2022-04/odin-ubuntu_amd64-dev-2022-04.zip -o odin.zip
+      sudo apt install unzip
+    command: |
+      unzip odin.zip -d odin
+      rm -rf odin.zip
+      export PATH=$PATH:odin/
+      
