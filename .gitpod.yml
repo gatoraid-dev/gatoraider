@@ -1,9 +1,13 @@
 tasks:
   - init: |
-      curl -L https://github.com/odin-lang/Odin/releases/download/dev-2022-04/odin-ubuntu_amd64-dev-2022-04.zip -o odin.zip
-      sudo apt install unzip
+      curl -L https://github.com/odin-lang/Odin/archive/refs/tags/dev-2022-04.tar.gz -o odin.tar.gz
+      sudo apt install llvm-11
+      sudo update-alternatives --install /usr/bin/llvm-config llvm-config /usr/bin/llvm-config-11 11
     command: |
-      unzip odin.zip -d odin
-      rm -rf odin.zip
-      export PATH=$PATH:odin/
+      tar -xf odin.tar.gz
+      rm -rf odin.tar.gz
+      mv Odin-dev-2022-04 odin
+      cd odin
+      make release
+      export PATH=$PATH:odin
       
