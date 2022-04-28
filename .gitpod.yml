@@ -9,5 +9,6 @@ tasks:
       mv Odin-dev-2022-04 odin
       cd odin
       make release
+      cd ..
       export PATH=$PATH:odin
       
