@@ -1,4 +1,4 @@
-# This is the roadmap of the various games that I'll be (attempting) to re/create.
+## This is the roadmap of the various games that I'll be (attempting) to re/create, in no particular order.
 
 - [ ] Space Invaders
 - [ ] Snake
