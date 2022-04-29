@@ -3,7 +3,7 @@ package main
 import "vendor:raylib"
 
 alien :: struct {
-    collisionBox: raylib.Rectangle,
+    collisionBox: [dynamic]raylib.Rectangle,
     position: raylib.Vector2,
     image: raylib.Texture2D,
 }
