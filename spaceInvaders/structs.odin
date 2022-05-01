@@ -7,14 +7,13 @@ alien :: struct {
     position: raylib.Vector2,
     image: raylib.Texture2D,
 }
-blast :: struct {
+blastPos :: struct {
     collisionBox: raylib.Rectangle,
     position: raylib.Vector2,
-    image: raylib.Texture2D,
+    enabled: bool,
 }
 ship :: struct {
     collisionBox: raylib.Rectangle,
     position: raylib.Vector2,
     image: raylib.Texture2D,
-    blasting: bool,
 }
