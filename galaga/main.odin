@@ -14,7 +14,7 @@ main :: proc() {
     blast := LoadTexture("assets/blast.png")
     blasts: [dynamic]blastPos
     //Add position to array to add new alien
-    alienPos := [dynamic]Vector2{alien.position, Vector2{alien.position.x - 70, alien.position.y}, Vector2{alien.position.x + 70, alien.position.y}, Vector2{alien.position.x - 140, alien.position.y}, Vector2{alien.position.x + 140, alien.position.y}, Vector2{alien.position.x - 210, alien.position.y}, Vector2{alien.position.x + 140, alien.position.y}}
+    alienPos := [dynamic]Vector2{alien.position, Vector2{alien.position.x - 70, alien.position.y}, Vector2{alien.position.x + 70, alien.position.y}, Vector2{alien.position.x - 140, alien.position.y}, Vector2{alien.position.x + 140, alien.position.y}, Vector2{alien.position.x - 140, alien.position.y}, Vector2{alien.position.x + 210, alien.position.y}, Vector2{alien.position.x - 210, alien.position.y}}
     defer {
         UnloadTexture(spaceship.image)
         UnloadTexture(blast)
