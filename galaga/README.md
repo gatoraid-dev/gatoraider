@@ -1,6 +1,6 @@
-# Space Invaders
+# Galaga
 
-A simple clone of the famous Space Invaders retro game, made in Odin.
+A simple clone of the famous Galaga retro game, made in Odin.
 
 ## Building and Running
 
