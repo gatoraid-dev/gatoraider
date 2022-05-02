@@ -10,6 +10,6 @@ Prerequisites
 
 Download the repository with `git clone https://github.com/csharpdf/gatoraider`
 
-Navigate to the game directory of your choice in your terminal (e.g. spaceInvaders)
+Navigate to the game directory of your choice in your terminal (e.g. galaga)
 
 Run `odin run .`
