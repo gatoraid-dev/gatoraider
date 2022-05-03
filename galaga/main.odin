@@ -4,6 +4,8 @@ import "vendor:raylib"
 import "core:fmt"
 import "core:math/rand"
 import "core:time"
+
+
 main :: proc() {
     using raylib
     screenHeight :: 800
