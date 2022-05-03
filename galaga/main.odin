@@ -2,6 +2,8 @@ package main
 
 import "vendor:raylib"
 import "core:fmt"
+import "core:math/rand"
+import "core:time"
 main :: proc() {
     using raylib
     screenHeight :: 800
@@ -13,6 +15,7 @@ main :: proc() {
     alien := alien{[dynamic]Rectangle{}, Vector2{280, 130}, LoadTexture("assets/alien.png")}
     blast := LoadTexture("assets/blast.png")
     blasts: [dynamic]blastPos
+    aBlasts: [dynamic]blastPos
     //Add position to array to add new alien
     alienPos := [dynamic]Vector2{alien.position, Vector2{alien.position.x - 70, alien.position.y}, Vector2{alien.position.x + 70, alien.position.y}, Vector2{alien.position.x - 140, alien.position.y}, Vector2{alien.position.x + 140, alien.position.y}, Vector2{alien.position.x - 140, alien.position.y}, Vector2{alien.position.x + 210, alien.position.y}, Vector2{alien.position.x - 210, alien.position.y}}
     defer {
@@ -27,6 +30,9 @@ main :: proc() {
             append(&alien.collisionBox, Rectangle{f32(pos.x), f32(pos.y), f32(alien.image.width), f32(alien.image.height)})
         }
         for b in &blasts {
+            b.collisionBox = Rectangle{f32(b.position.x), f32(b.position.y), f32(blast.width), f32(blast.height)}
+        }
+        for b in &aBlasts {
             b.collisionBox = Rectangle{f32(b.position.x), f32(b.position.y), f32(blast.width), f32(blast.height)}
         }
         if (IsKeyDown(KeyboardKey.RIGHT) && !(spaceship.position.x >= screenWidth-50)) do spaceship.position.x += 5
@@ -65,7 +71,36 @@ main :: proc() {
                     //fmt.printf("still going")
                 }
             }
+            for b, i in &aBlasts {
+                check2: if (b.position.y == screenHeight && b.enabled) {
+                    fmt.print("blast touched screen edge\n")
+                    b.enabled = false
+                    unordered_remove(&aBlasts, i)
+                    break check2
+                } else {
+                    if (CheckCollisionRecs(spaceship.collisionBox, b.collisionBox) && b.enabled) {
+                        fmt.print("blast touched alien\n")
+                        fmt.printf("spaceship.position: %s\n", spaceship.position)
+                        fmt.printf("blast.position: %s\n", b.position)
+                        b.enabled = false
+                        unordered_remove(&aBlasts, i)
+                        break check2
+                    }
+                b.position.y += 10
+                DrawTextureEx(blast, b.position, 180, 1, WHITE)
+                    //fmt.printf("still going")
+                }
+            }
         EndDrawing()
+        ab: for a, i in &alienPos {
+            r := rand.create(u64(time.time_to_unix_nano(time.now())))
+            if (rand.int63_max(i64(len(alienPos)), &r) == 1) {
+                fmt.print("new alien blast\n")
+                newBlast := blastPos{Rectangle{f32(a.x), f32(a.y), f32(alien.image.width), f32(alien.image.height)}, Vector2{f32(a.x), f32(a.y)}, true}
+                append(&aBlasts, newBlast)
+                break ab
+            }
+        }
         if (IsKeyPressed(KeyboardKey.SPACE)) {
             fmt.print("space pressed, started blast\n")
             newBlast := blastPos{Rectangle{f32(spaceship.position.x), f32(spaceship.position.y), f32(spaceship.image.width), f32(spaceship.image.height)}, Vector2{f32(spaceship.position.x), f32(spaceship.position.y)}, true}
