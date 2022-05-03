@@ -43,12 +43,15 @@ main :: proc() {
             for pos in alienPos {
                 DrawTextureV(alien.image, pos, WHITE)
             }
-            /*// For hitbox debugging
+            // For hitbox debugging
             DrawRectangleLinesEx(alien.collisionBox[1], 3, GREEN)
-            DrawRectangleLinesEx(blast.collisionBox, 3, RED)
+            //DrawRectangleLinesEx(blast.collisionBox, 3, RED)
+            for b in aBlasts {
+                DrawRectangleLinesEx(b.collisionBox, 2, RED)
+            }
             DrawRectangleLinesEx(spaceship.collisionBox, 3, BLUE)
             // -End hitbox debugging- //
-            */
+            
             for b, i in &blasts {
                 check: if (b.position.y == 0 && b.enabled) {
                     fmt.print("blast touched screen edge\n")
@@ -87,6 +90,7 @@ main :: proc() {
                         break check2
                     }
                 b.position.y += 10
+                //make seperate texture in assets for this blast, rotating at all changes hitbox offset
                 DrawTextureEx(blast, b.position, 180, 1, WHITE)
                     //fmt.printf("still going")
                 }
