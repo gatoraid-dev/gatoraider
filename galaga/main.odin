@@ -14,6 +14,7 @@ main :: proc() {
     spaceship := ship{Rectangle{}, Vector2{260, 700}, LoadTexture("assets/ship.png")}
     alien := alien{[dynamic]Rectangle{}, Vector2{280, 130}, LoadTexture("assets/alien.png")}
     blast := LoadTexture("assets/blast.png")
+    blastB := LoadTexture("assets/blastB.png")
     blasts: [dynamic]blastPos
     aBlasts: [dynamic]blastPos
     //Add position to array to add new alien
@@ -22,6 +23,7 @@ main :: proc() {
         UnloadTexture(spaceship.image)
         UnloadTexture(blast)
         UnloadTexture(alien.image)
+        UnloadTexture(blastB)
     }
     for (!WindowShouldClose()) {
         PollInputEvents()   // Update input
@@ -33,17 +35,15 @@ main :: proc() {
             b.collisionBox = Rectangle{f32(b.position.x), f32(b.position.y), f32(blast.width), f32(blast.height)}
         }
         for b in &aBlasts {
-            b.collisionBox = Rectangle{f32(b.position.x), f32(b.position.y), f32(blast.width), f32(blast.height)}
+            b.collisionBox = Rectangle{f32(b.position.x), f32(b.position.y), f32(blastB.width), f32(blastB.height)}
         }
-        if (IsKeyDown(KeyboardKey.RIGHT) && !(spaceship.position.x >= screenWidth-50)) do spaceship.position.x += 5
-        if (IsKeyDown(KeyboardKey.LEFT) && !(spaceship.position.x <= 0)) do spaceship.position.x -= 5
         BeginDrawing()
             ClearBackground(BLACK)
             DrawTextureV(spaceship.image, spaceship.position, WHITE)
             for pos in alienPos {
                 DrawTextureV(alien.image, pos, WHITE)
             }
-            // For hitbox debugging
+            /*// For hitbox debugging
             DrawRectangleLinesEx(alien.collisionBox[1], 3, GREEN)
             //DrawRectangleLinesEx(blast.collisionBox, 3, RED)
             for b in aBlasts {
@@ -51,7 +51,7 @@ main :: proc() {
             }
             DrawRectangleLinesEx(spaceship.collisionBox, 3, BLUE)
             // -End hitbox debugging- //
-            
+            */
             for b, i in &blasts {
                 check: if (b.position.y == 0 && b.enabled) {
                     fmt.print("blast touched screen edge\n")
@@ -91,11 +91,18 @@ main :: proc() {
                     }
                 b.position.y += 10
                 //make seperate texture in assets for this blast, rotating at all changes hitbox offset
-                DrawTextureEx(blast, b.position, 180, 1, WHITE)
+                DrawTextureV(blastB, b.position, WHITE)
                     //fmt.printf("still going")
                 }
             }
         EndDrawing()
+        if (IsKeyDown(KeyboardKey.RIGHT) && !(spaceship.position.x >= screenWidth-50)) do spaceship.position.x += 5
+        if (IsKeyDown(KeyboardKey.LEFT) && !(spaceship.position.x <= 0)) do spaceship.position.x -= 5
+        if (IsKeyPressed(KeyboardKey.SPACE)) {
+            fmt.print("space pressed, started blast\n")
+            newBlast := blastPos{Rectangle{f32(spaceship.position.x), f32(spaceship.position.y), f32(spaceship.image.width), f32(spaceship.image.height)}, Vector2{f32(spaceship.position.x), f32(spaceship.position.y)}, true}
+            append(&blasts, newBlast)
+        }
         ab: for a, i in &alienPos {
             r := rand.create(u64(time.time_to_unix_nano(time.now())))
             if (rand.int63_max(i64(len(alienPos)), &r) == 1) {
@@ -104,11 +111,6 @@ main :: proc() {
                 append(&aBlasts, newBlast)
                 break ab
             }
-        }
-        if (IsKeyPressed(KeyboardKey.SPACE)) {
-            fmt.print("space pressed, started blast\n")
-            newBlast := blastPos{Rectangle{f32(spaceship.position.x), f32(spaceship.position.y), f32(spaceship.image.width), f32(spaceship.image.height)}, Vector2{f32(spaceship.position.x), f32(spaceship.position.y)}, true}
-            append(&blasts, newBlast)
         }
     }
 }
