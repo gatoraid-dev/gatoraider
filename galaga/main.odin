@@ -43,7 +43,8 @@ main :: proc() {
     for (!WindowShouldClose()) {
         PollInputEvents()   // Update input
         deltaTime = GetFrameTime()
-
+        
+        //Update hitboxes for all blasts, aliens, and spaceship//
         spaceship.collisionBox = Rectangle{f32(spaceship.position.x), f32(spaceship.position.y), f32(spaceship.image.width), f32(spaceship.image.height)}
         for a in &aliens {
             if (a.enabled) do a.collisionBox = Rectangle{f32(a.position.x), f32(a.position.y), f32(alien.width), f32(alien.height)}
@@ -54,6 +55,9 @@ main :: proc() {
         for b in &aBlasts {
             b.collisionBox = Rectangle{f32(b.position.x), f32(b.position.y), f32(blastB.width), f32(blastB.height)}
         }
+        //..//
+        
+        //Subtracts the current delay for each alien's shot by the current deltaTime
         for a in &aliens {
             if a.blastDelay >= 0 {
                 a.blastDelay -= deltaTime
@@ -62,10 +66,13 @@ main :: proc() {
         }
         BeginDrawing()
             ClearBackground(BLACK)
+            //Checks if all aliens are dead
             if (aliensDied == len(aliens)) {
                 DrawText("You Win!", screenWidth / 2 - MeasureText("You Win!", 50) / 2, screenHeight / 2 - 50, 50, GREEN)
             }
+            //Updates spaceship position
             DrawTextureV(spaceship.image, spaceship.position, WHITE)
+            //Checks if a is dead, if not then update position
             for a in aliens {
                 if (a.enabled) do DrawTextureV(alien, a.position, WHITE)
             }
@@ -80,6 +87,7 @@ main :: proc() {
             DrawRectangleLinesEx(spaceship.collisionBox, 3, BLUE)
             // -End hitbox debugging- //
             
+            //If any spaceship bullets hit any aliens or the screen edge, disappear, otherwise keep going
             for b, i in &blasts {
                 check: if (b.position.y == 0 && b.enabled) {
                     fmt.print("blast touched screen edge\n")
@@ -105,6 +113,7 @@ main :: proc() {
                     //fmt.printf("still going")
                 }
             }
+            //If any alien bullets hit the player or touch the edge, then disappear, otherwise keep going
             for b, i in &aBlasts {
                 check2: if (b.position.y == screenHeight && b.enabled) {
                     fmt.print("blast touched screen edge\n")
@@ -128,7 +137,7 @@ main :: proc() {
             }
         EndDrawing()
 
-
+        //Spaceship input, moving left & right, shooting
         if (IsKeyDown(KeyboardKey.RIGHT) && !(spaceship.position.x >= screenWidth-50)) do spaceship.position.x += spaceship.speed
         if (IsKeyDown(KeyboardKey.LEFT) && !(spaceship.position.x <= 0)) do spaceship.position.x -= spaceship.speed
         if (IsKeyPressed(KeyboardKey.SPACE)) {
@@ -137,7 +146,7 @@ main :: proc() {
             append(&blasts, newBlast)
         }
 
-
+        //Gets a random int for each alien, if == 1 then fire they fire a bullet
         ab: for a, i in &aliens {
             if (a.blastDelay <= 0 && a.enabled) {
                 //fmt.printf("alien thing")
