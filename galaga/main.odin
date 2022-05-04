@@ -10,28 +10,43 @@ main :: proc() {
     using raylib
     screenHeight :: 800
     screenWidth :: 600
+    baseAlienPos := Vector2{280, 130}
+    aliensDied := 0
     InitWindow(screenWidth, screenHeight, "Gatoraider: Blast of the Gator")
     defer CloseWindow()
     SetTargetFPS(60)
-    spaceship := ship{Rectangle{}, Vector2{260, 700}, LoadTexture("assets/ship.png")}
-    alien := alien{[dynamic]Rectangle{}, Vector2{280, 130}, LoadTexture("assets/alien.png")}
+    spaceship := Ship{Rectangle{}, Vector2{260, 700}, LoadTexture("assets/ship.png"), 5, 3, 1.0}
     blast := LoadTexture("assets/blast.png")
     blastB := LoadTexture("assets/blastB.png")
-    blasts: [dynamic]blastPos
-    aBlasts: [dynamic]blastPos
+    alien := LoadTexture("assets/alien.png")
+    blasts: [dynamic]BlastPos
+    aBlasts: [dynamic]BlastPos
+    aBlastDelays: [dynamic]f32
+    blastDelays: [dynamic]f32
+    deltaTime: f32
     //Add position to array to add new alien
-    alienPos := [dynamic]Vector2{alien.position, Vector2{alien.position.x - 70, alien.position.y}, Vector2{alien.position.x + 70, alien.position.y}, Vector2{alien.position.x - 140, alien.position.y}, Vector2{alien.position.x + 140, alien.position.y}, Vector2{alien.position.x - 140, alien.position.y}, Vector2{alien.position.x + 210, alien.position.y}, Vector2{alien.position.x - 210, alien.position.y}}
+    aliens := [dynamic]Alien{
+        Alien{Rectangle{}, baseAlienPos, 1.5, true},
+        Alien{Rectangle{}, Vector2{baseAlienPos.x - 70, baseAlienPos.y}, 1.5, true},
+        Alien{Rectangle{}, Vector2{baseAlienPos.x + 70, baseAlienPos.y}, 1.5, true},
+        Alien{Rectangle{}, Vector2{baseAlienPos.x - 140, baseAlienPos.y}, 1.5, true},
+        Alien{Rectangle{}, Vector2{baseAlienPos.x + 140, baseAlienPos.y}, 1.5, true},
+        Alien{Rectangle{}, Vector2{baseAlienPos.x - 210, baseAlienPos.y}, 1.5, true},
+        Alien{Rectangle{}, Vector2{baseAlienPos.x + 210, baseAlienPos.y}, 1.5, true},
+        }
     defer {
         UnloadTexture(spaceship.image)
         UnloadTexture(blast)
-        UnloadTexture(alien.image)
+        UnloadTexture(alien)
         UnloadTexture(blastB)
     }
     for (!WindowShouldClose()) {
         PollInputEvents()   // Update input
+        deltaTime = GetFrameTime()
+
         spaceship.collisionBox = Rectangle{f32(spaceship.position.x), f32(spaceship.position.y), f32(spaceship.image.width), f32(spaceship.image.height)}
-        for pos in alienPos {
-            append(&alien.collisionBox, Rectangle{f32(pos.x), f32(pos.y), f32(alien.image.width), f32(alien.image.height)})
+        for a in &aliens {
+            if (a.enabled) do a.collisionBox = Rectangle{f32(a.position.x), f32(a.position.y), f32(alien.width), f32(alien.height)}
         }
         for b in &blasts {
             b.collisionBox = Rectangle{f32(b.position.x), f32(b.position.y), f32(blast.width), f32(blast.height)}
@@ -39,21 +54,32 @@ main :: proc() {
         for b in &aBlasts {
             b.collisionBox = Rectangle{f32(b.position.x), f32(b.position.y), f32(blastB.width), f32(blastB.height)}
         }
+        for a in &aliens {
+            if a.blastDelay >= 0 {
+                a.blastDelay -= deltaTime
+                fmt.print("a.blastDelay: ", a.blastDelay, "\n")
+            }
+        }
         BeginDrawing()
             ClearBackground(BLACK)
-            DrawTextureV(spaceship.image, spaceship.position, WHITE)
-            for pos in alienPos {
-                DrawTextureV(alien.image, pos, WHITE)
+            if (aliensDied == len(aliens)) {
+                DrawText("You Win!", screenWidth / 2 - MeasureText("You Win!", 50) / 2, screenHeight / 2 - 50, 50, GREEN)
             }
-            /*// For hitbox debugging
-            DrawRectangleLinesEx(alien.collisionBox[1], 3, GREEN)
+            DrawTextureV(spaceship.image, spaceship.position, WHITE)
+            for a in aliens {
+                if (a.enabled) do DrawTextureV(alien, a.position, WHITE)
+            }
+            // For hitbox debugging
+            for a in aliens {
+                DrawRectangleLinesEx(a.collisionBox, 3, GREEN)
+            }
             //DrawRectangleLinesEx(blast.collisionBox, 3, RED)
             for b in aBlasts {
                 DrawRectangleLinesEx(b.collisionBox, 2, RED)
             }
             DrawRectangleLinesEx(spaceship.collisionBox, 3, BLUE)
             // -End hitbox debugging- //
-            */
+            
             for b, i in &blasts {
                 check: if (b.position.y == 0 && b.enabled) {
                     fmt.print("blast touched screen edge\n")
@@ -61,12 +87,15 @@ main :: proc() {
                     unordered_remove(&blasts, i)
                     break check
                 } else {
-                    for box in alien.collisionBox {
-                        if (CheckCollisionRecs(box, b.collisionBox) && b.enabled) {
+                    for a in &aliens {
+                        if (CheckCollisionRecs(a.collisionBox, b.collisionBox) && b.enabled) {
                             fmt.print("blast touched alien\n")
-                            fmt.printf("alien.position: %s\n", alien.position)
+                            fmt.printf("alien.position: %s\n", a.position)
                             fmt.printf("blast.position: %s\n", b.position)
                             b.enabled = false
+                            a.enabled = false
+                            a.collisionBox = Rectangle{}
+                            aliensDied += 1
                             unordered_remove(&blasts, i)
                             break check
                         }
@@ -98,20 +127,28 @@ main :: proc() {
                 }
             }
         EndDrawing()
-        if (IsKeyDown(KeyboardKey.RIGHT) && !(spaceship.position.x >= screenWidth-50)) do spaceship.position.x += 5
-        if (IsKeyDown(KeyboardKey.LEFT) && !(spaceship.position.x <= 0)) do spaceship.position.x -= 5
+
+
+        if (IsKeyDown(KeyboardKey.RIGHT) && !(spaceship.position.x >= screenWidth-50)) do spaceship.position.x += spaceship.speed
+        if (IsKeyDown(KeyboardKey.LEFT) && !(spaceship.position.x <= 0)) do spaceship.position.x -= spaceship.speed
         if (IsKeyPressed(KeyboardKey.SPACE)) {
             fmt.print("space pressed, started blast\n")
-            newBlast := blastPos{Rectangle{f32(spaceship.position.x), f32(spaceship.position.y), f32(spaceship.image.width), f32(spaceship.image.height)}, Vector2{f32(spaceship.position.x), f32(spaceship.position.y)}, true}
+            newBlast := BlastPos{Rectangle{f32(spaceship.position.x+f32((spaceship.image.width/2))), f32(spaceship.position.y), f32(spaceship.image.width), f32(spaceship.image.height)}, Vector2{f32(spaceship.position.x+f32((spaceship.image.width/2))), f32(spaceship.position.y)}, true}
             append(&blasts, newBlast)
         }
-        ab: for a, i in &alienPos {
-            r := rand.create(u64(time.time_to_unix_nano(time.now())))
-            if (rand.int63_max(i64(len(alienPos)), &r) == 1) {
-                fmt.print("new alien blast\n")
-                newBlast := blastPos{Rectangle{f32(a.x), f32(a.y), f32(alien.image.width), f32(alien.image.height)}, Vector2{f32(a.x), f32(a.y)}, true}
-                append(&aBlasts, newBlast)
-                break ab
+
+
+        ab: for a, i in &aliens {
+            if (a.blastDelay <= 0 && a.enabled) {
+                //fmt.printf("alien thing")
+                r := rand.create(u64(time.time_to_unix_nano(time.now())))
+                if (rand.int63_max(i64(f64(len(aliens))*1.5), &r) == 1) {
+                    fmt.print("new alien blast\n")
+                    newBlast := BlastPos{Rectangle{f32(a.position.x+(f32(alien.width)/1.5)), f32(a.position.y+f32(alien.height/2)), f32(alien.width), f32(alien.height)}, Vector2{f32(a.position.x+(f32(alien.width)/1.5)), f32(a.position.y+f32(alien.height/2))}, true}
+                    append(&aBlasts, newBlast)
+                    a.blastDelay = 1.5
+                    break ab
+                }
             }
         }
     }

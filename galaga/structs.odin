@@ -2,18 +2,22 @@ package main
 
 import "vendor:raylib"
 
-alien :: struct {
-    collisionBox: [dynamic]raylib.Rectangle,
+Alien :: struct {
+    collisionBox: raylib.Rectangle,
     position: raylib.Vector2,
-    image: raylib.Texture2D,
+    blastDelay: f32,
+    enabled: bool,
 }
-blastPos :: struct {
+BlastPos :: struct {
     collisionBox: raylib.Rectangle,
     position: raylib.Vector2,
     enabled: bool,
 }
-ship :: struct {
+Ship :: struct {
     collisionBox: raylib.Rectangle,
     position: raylib.Vector2,
     image: raylib.Texture2D,
+    speed: f32,
+    lives: int,
+    blastDelay:f32,
 }
