@@ -18,6 +18,6 @@ Ship :: struct {
     position: raylib.Vector2,
     image: raylib.Texture2D,
     speed: f32,
-    lives: uint,
+    lives: int,
     blastDelay:f32,
 }
