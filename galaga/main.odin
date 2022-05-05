@@ -61,78 +61,86 @@ main :: proc() {
         for a in &aliens {
             if a.blastDelay >= 0 {
                 a.blastDelay -= deltaTime
-                fmt.print("a.blastDelay: ", a.blastDelay, "\n")
+                //fmt.print("a.blastDelay: ", a.blastDelay, "\n")
             }
         }
         BeginDrawing()
             ClearBackground(BLACK)
+            //Draws the current lives left 
+            DrawText("Lives: "/* + spaceship.lives*/, 0, screenHeight - MeasureText("Lives: "/* + spaceship.lives*/, 20), 20, WHITE)
             //Checks if all aliens are dead
             if (aliensDied == len(aliens)) {
                 DrawText("You Win!", screenWidth / 2 - MeasureText("You Win!", 50) / 2, screenHeight / 2 - 50, 50, GREEN)
             }
-            //Updates spaceship position
-            DrawTextureV(spaceship.image, spaceship.position, WHITE)
-            //Checks if a is dead, if not then update position
-            for a in aliens {
-                if (a.enabled) do DrawTextureV(alien, a.position, WHITE)
-            }
-            // For hitbox debugging
-            for a in aliens {
-                DrawRectangleLinesEx(a.collisionBox, 3, GREEN)
-            }
-            //DrawRectangleLinesEx(blast.collisionBox, 3, RED)
-            for b in aBlasts {
-                DrawRectangleLinesEx(b.collisionBox, 2, RED)
-            }
-            DrawRectangleLinesEx(spaceship.collisionBox, 3, BLUE)
-            // -End hitbox debugging- //
-            
-            //If any spaceship bullets hit any aliens or the screen edge, disappear, otherwise keep going
-            for b, i in &blasts {
-                check: if (b.position.y == 0 && b.enabled) {
-                    fmt.print("blast touched screen edge\n")
-                    b.enabled = false
-                    unordered_remove(&blasts, i)
-                    break check
-                } else {
-                    for a in &aliens {
-                        if (CheckCollisionRecs(a.collisionBox, b.collisionBox) && b.enabled) {
-                            fmt.print("blast touched alien\n")
-                            fmt.printf("alien.position: %s\n", a.position)
-                            fmt.printf("blast.position: %s\n", b.position)
-                            b.enabled = false
-                            a.enabled = false
-                            a.collisionBox = Rectangle{}
-                            aliensDied += 1
-                            unordered_remove(&blasts, i)
-                            break check
-                        }
-                    }
-                    b.position.y -= 10
-                    DrawTextureV(blast, b.position, WHITE)
-                    //fmt.printf("still going")
+            //Checks if player lives are 0 or less, if so then game over
+            if (spaceship.lives <= 0) {
+                DrawText("You Lose!", screenWidth / 2 - MeasureText("You Lose!", 50) / 2, screenHeight / 2 - 50, 50, RED)
+            } else {
+                //Updates spaceship position
+                DrawTextureV(spaceship.image, spaceship.position, WHITE)
+                //Checks if a is dead, if not then update position
+                for a in aliens {
+                    if (a.enabled) do DrawTextureV(alien, a.position, WHITE)
                 }
-            }
-            //If any alien bullets hit the player or touch the edge, then disappear, otherwise keep going
-            for b, i in &aBlasts {
-                check2: if (b.position.y == screenHeight && b.enabled) {
-                    fmt.print("blast touched screen edge\n")
-                    b.enabled = false
-                    unordered_remove(&aBlasts, i)
-                    break check2
-                } else {
-                    if (CheckCollisionRecs(spaceship.collisionBox, b.collisionBox) && b.enabled) {
-                        fmt.print("blast touched alien\n")
-                        fmt.printf("spaceship.position: %s\n", spaceship.position)
-                        fmt.printf("blast.position: %s\n", b.position)
+                /*// For hitbox debugging
+                for a in aliens {
+                    DrawRectangleLinesEx(a.collisionBox, 3, GREEN)
+                }
+                //DrawRectangleLinesEx(blast.collisionBox, 3, RED)
+                for b in aBlasts {
+                    DrawRectangleLinesEx(b.collisionBox, 2, RED)
+                }
+                DrawRectangleLinesEx(spaceship.collisionBox, 3, BLUE)
+                // -End hitbox debugging- //
+                */
+                //If any spaceship bullets hit any aliens or the screen edge, disappear, otherwise keep going
+                for b, i in &blasts {
+                    check: if (b.position.y == 0 && b.enabled) {
+                        //fmt.print("blast touched screen edge\n")
+                        b.enabled = false
+                        unordered_remove(&blasts, i)
+                        break check
+                    } else {
+                        for a in &aliens {
+                            if (CheckCollisionRecs(a.collisionBox, b.collisionBox) && b.enabled) {
+                                /*fmt.print("blast touched alien\n")
+                                fmt.printf("alien.position: %s\n", a.position)
+                                fmt.printf("blast.position: %s\n", b.position)*/
+                                b.enabled = false
+                                a.enabled = false
+                                a.collisionBox = Rectangle{}
+                                aliensDied += 1
+                                unordered_remove(&blasts, i)
+                                break check
+                            }
+                        }
+                        b.position.y -= 10
+                        DrawTextureV(blast, b.position, WHITE)
+                        //fmt.printf("still going")
+                    }
+                }
+                //If any alien bullets hit the player or touch the edge, then disappear, otherwise keep going
+                for b, i in &aBlasts {
+                    check2: if (b.position.y == screenHeight && b.enabled) {
+                        //fmt.print("blast touched screen edge\n")
                         b.enabled = false
                         unordered_remove(&aBlasts, i)
                         break check2
+                    } else {
+                        if (CheckCollisionRecs(spaceship.collisionBox, b.collisionBox) && b.enabled) {
+                            /*fmt.print("blast touched alien\n")
+                            fmt.printf("spaceship.position: %s\n", spaceship.position)
+                            fmt.printf("blast.position: %s\n", b.position)*/
+                            b.enabled = false
+                            unordered_remove(&aBlasts, i)
+                            spaceship.lives -= 1
+                            break check2
+                        }
+                    b.position.y += 10
+                    //make seperate texture in assets for this blast, rotating at all changes hitbox offset
+                    DrawTextureV(blastB, b.position, WHITE)
+                        //fmt.printf("still going")
                     }
-                b.position.y += 10
-                //make seperate texture in assets for this blast, rotating at all changes hitbox offset
-                DrawTextureV(blastB, b.position, WHITE)
-                    //fmt.printf("still going")
                 }
             }
         EndDrawing()
@@ -152,7 +160,7 @@ main :: proc() {
                 //fmt.printf("alien thing")
                 r := rand.create(u64(time.time_to_unix_nano(time.now())))
                 if (rand.int63_max(i64(f64(len(aliens))*1.5), &r) == 1) {
-                    fmt.print("new alien blast\n")
+                    //fmt.print("new alien blast\n")
                     newBlast := BlastPos{Rectangle{f32(a.position.x+(f32(alien.width)/1.5)), f32(a.position.y+f32(alien.height/2)), f32(alien.width), f32(alien.height)}, Vector2{f32(a.position.x+(f32(alien.width)/1.5)), f32(a.position.y+f32(alien.height/2))}, true}
                     append(&aBlasts, newBlast)
                     a.blastDelay = 1.5
