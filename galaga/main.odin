@@ -70,8 +70,7 @@ main :: proc() {
             ClearBackground(BLACK)
             //Draws the current lives left
             bytes : [32]u8
-            l := strconv.itoa(bytes[:], spaceship.lives)
-            DrawText(cstring("Lives: " + l), 0, screenHeight - MeasureText(cstring("Lives: " + l), 20), 20, WHITE)
+            DrawText(cstring(strings.concatenate({"Lives: " + strconv.itoa(bytes[:], spaceship.lives)})), 0, screenHeight - MeasureText(cstring("Lives: " + l), 20), 20, WHITE)
             //Checks if all aliens are dead
             if (aliensDied == len(aliens)) {
                 DrawText("You Win!", screenWidth / 2 - MeasureText("You Win!", 50) / 2, screenHeight / 2 - 50, 50, GREEN)
