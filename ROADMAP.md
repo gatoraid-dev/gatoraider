@@ -5,7 +5,7 @@
 - [ ] Mario ~~teaches typing~~
 - [ ] Pacman
 - [ ] Donkey Kong
-- [ ] Street Fighters
+- [ ] Street Fighters <-- (i really wanna do this one)
 - [ ] Dungeon Crawler Card Game
 
 ## The end of the road.
