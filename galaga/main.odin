@@ -8,16 +8,17 @@ import "core:strconv"
 import "core:strings"
 
 
+screenHeight :: 800
+screenWidth :: 600
+aMaxHeight :: 200
+baseAlienPos := raylib.Vector2{280, 130}
+
 main :: proc() {
     using raylib
-    screenHeight :: 800
-    screenWidth :: 600
-    baseAlienPos := Vector2{280, 130}
-    aliensDied := 0
     InitWindow(screenWidth, screenHeight, "Gatoraider: Blast of the Gator")
     defer CloseWindow()
     SetTargetFPS(60)
-    spaceship := Ship{Rectangle{}, Vector2{260, 700}, LoadTexture("assets/ship.png"), 5, 3, 1.0}
+    spaceship := Ship{Rectangle{}, Vector2{260, 700}, LoadTexture("assets/ship.png"), 5, 3, 1.0, 0}
     blast := LoadTexture("assets/blast.png")
     blastB := LoadTexture("assets/blastB.png")
     alien := LoadTexture("assets/alien.png")
@@ -28,13 +29,13 @@ main :: proc() {
     deltaTime: f32
     //Add position to array to add new alien
     aliens := [dynamic]Alien{
-        Alien{Rectangle{}, baseAlienPos, 1.5, true},
-        Alien{Rectangle{}, Vector2{baseAlienPos.x - 70, baseAlienPos.y}, 1.5, true},
-        Alien{Rectangle{}, Vector2{baseAlienPos.x + 70, baseAlienPos.y}, 1.5, true},
-        Alien{Rectangle{}, Vector2{baseAlienPos.x - 140, baseAlienPos.y}, 1.5, true},
-        Alien{Rectangle{}, Vector2{baseAlienPos.x + 140, baseAlienPos.y}, 1.5, true},
-        Alien{Rectangle{}, Vector2{baseAlienPos.x - 210, baseAlienPos.y}, 1.5, true},
-        Alien{Rectangle{}, Vector2{baseAlienPos.x + 210, baseAlienPos.y}, 1.5, true},
+        Alien{Rectangle{}, Vector2{clamp(baseAlienPos.x, f32(0), f32(screenWidth - alien.width)), clamp(baseAlienPos.y, f32(0), f32(200))}, 0.1, true, false, 2},
+        Alien{Rectangle{}, Vector2{clamp(baseAlienPos.x - 70, f32(0), f32(screenWidth - alien.width)), clamp(baseAlienPos.y, f32(0), f32(200))}, 0.1, true, false, 2},
+        Alien{Rectangle{}, Vector2{clamp(baseAlienPos.x + 70, f32(0), f32(screenWidth - alien.width)), clamp(baseAlienPos.y, f32(0), f32(200))}, 0.1, true, false, 2},
+        Alien{Rectangle{}, Vector2{clamp(baseAlienPos.x - 140, f32(0), f32(screenWidth - alien.width)), clamp(baseAlienPos.y, f32(0), f32(200))}, 0.1, true, false, 2},
+        Alien{Rectangle{}, Vector2{clamp(baseAlienPos.x + 140, f32(0), f32(screenWidth - alien.width)), clamp(baseAlienPos.y, f32(0), f32(200))}, 0.1, true, false, 2},
+        Alien{Rectangle{}, Vector2{clamp(baseAlienPos.x - 210, f32(0), f32(screenWidth - alien.width)), clamp(baseAlienPos.y, f32(0), f32(200))}, 0.1, true, false, 2},
+        Alien{Rectangle{}, Vector2{clamp(baseAlienPos.x + 210, f32(0), f32(screenWidth - alien.width)), clamp(baseAlienPos.y, f32(0), f32(200))}, 0.1, true, false, 2},
         }
     defer {
         UnloadTexture(spaceship.image)
@@ -68,17 +69,20 @@ main :: proc() {
         }
         BeginDrawing()
             ClearBackground(BLACK)
-            //Draws the current lives left
-            bytes : [32]u8
-            DrawText(cstring(strings.concatenate({"Lives: " + strconv.itoa(bytes[:], spaceship.lives)})), 0, screenHeight - MeasureText(cstring("Lives: " + l), 20), 20, WHITE)
+            //Draws the current lives left and current score
+            bytes : [64]u8
+            DrawText(strings.clone_to_cstring(strings.concatenate({"Lives: ", strconv.itoa(bytes[:], spaceship.lives)})), 0, screenHeight-30, 20, WHITE)
+            DrawText(strings.clone_to_cstring(strings.concatenate({"Score: ", strconv.itoa(bytes[:], spaceship.score)})), 100, screenHeight-30, 20, WHITE)
+            //..//
             //Checks if all aliens are dead
-            if (aliensDied == len(aliens)) {
+            if (len(aliens) <= 0) {
                 DrawText("You Win!", screenWidth / 2 - MeasureText("You Win!", 50) / 2, screenHeight / 2 - 50, 50, GREEN)
             }
             //Checks if player lives are 0 or less, if so then game over
             if (spaceship.lives <= 0) {
                 DrawText("You Lose!", screenWidth / 2 - MeasureText("You Lose!", 50) / 2, screenHeight / 2 - 50, 50, RED)
             } else {
+
                 //Updates spaceship position
                 DrawTextureV(spaceship.image, spaceship.position, WHITE)
                 //Checks if a is dead, if not then update position
@@ -104,15 +108,21 @@ main :: proc() {
                         unordered_remove(&blasts, i)
                         break check
                     } else {
-                        for a in &aliens {
+                        for a, ii in &aliens {
                             if (CheckCollisionRecs(a.collisionBox, b.collisionBox) && b.enabled) {
                                 /*fmt.print("blast touched alien\n")
                                 fmt.printf("alien.position: %s\n", a.position)
                                 fmt.printf("blast.position: %s\n", b.position)*/
                                 b.enabled = false
-                                a.enabled = false
-                                a.collisionBox = Rectangle{}
-                                aliensDied += 1
+                                if (a.lives <= 0) {
+                                    a.enabled = false
+                                    a.collisionBox = Rectangle{}
+                                    unordered_remove(&aliens, ii)
+                                    spaceship.score += 1
+                                } else {
+                                    a.lives -= 1
+                                }
+                                b.enabled = false
                                 unordered_remove(&blasts, i)
                                 break check
                             }
@@ -140,19 +150,40 @@ main :: proc() {
                             break check2
                         }
                     b.position.y += 10
-                    //make seperate texture in assets for this blast, rotating at all changes hitbox offset
                     DrawTextureV(blastB, b.position, WHITE)
                         //fmt.printf("still going")
+                    }
+                }
+                //makes aliens move
+                for a, i in &aliens {
+                    if (a.moving) {
+                        r := rand.create(u64(time.time_to_unix_nano(time.now())))
+                        if (rand.int63_max(i64(len(aliens)*2), &r) == 1) {
+                            r := rand.create(u64(time.time_to_unix_nano(time.now())))
+                            rint := rand.int63_max(5, &r)
+                            //checks if number = 5/5
+                            if (rint == 5 /*&& alien.position.x < screenWidth - alien.width*/) {
+                                a.position.x = clamp(a.position.x + 15, f32(0), f32(screenWidth - alien.width))
+                            } else if (rint == 4 /*&& alien.position.x > 0*/) { //checks in number = 4/5
+                                a.position.x = clamp(a.position.x - 15, f32(0), f32(screenWidth - alien.width))
+                            } else if (rint == 3 /*&& alien.position.x < screenWidth - alien.width*/) { //checks in number = 3/5
+                                a.position.y = clamp(a.position.y + 15, f32(0), f32(200))
+                            } else if (rint == 2 /*&& alien.position.x > 0*/) { //checks in number = 2/5
+                                a.position.y = clamp(a.position.y - 15, f32(0), f32(200))
+                            } else {
+                                a.moving = false
+                            }
+                        }
                     }
                 }
             }
         EndDrawing()
 
         //Spaceship input, moving left & right, shooting
-        if (IsKeyDown(KeyboardKey.RIGHT) && !(spaceship.position.x >= screenWidth-50)) do spaceship.position.x += spaceship.speed
+        if (IsKeyDown(KeyboardKey.RIGHT) && !(spaceship.position.x >= screenWidth-f32(spaceship.image.width))) do spaceship.position.x += spaceship.speed
         if (IsKeyDown(KeyboardKey.LEFT) && !(spaceship.position.x <= 0)) do spaceship.position.x -= spaceship.speed
         if (IsKeyPressed(KeyboardKey.SPACE)) {
-            fmt.print("space pressed, started blast\n")
+            //fmt.print("space pressed, started blast\n")
             newBlast := BlastPos{Rectangle{f32(spaceship.position.x+f32((spaceship.image.width/2))), f32(spaceship.position.y), f32(spaceship.image.width), f32(spaceship.image.height)}, Vector2{f32(spaceship.position.x+f32((spaceship.image.width/2))), f32(spaceship.position.y)}, true}
             append(&blasts, newBlast)
         }
@@ -162,13 +193,33 @@ main :: proc() {
             if (a.blastDelay <= 0 && a.enabled) {
                 //fmt.printf("alien thing")
                 r := rand.create(u64(time.time_to_unix_nano(time.now())))
-                if (rand.int63_max(i64(f64(len(aliens))*1.5), &r) == 1) {
+                if (rand.int63_max(i64(f64(len(aliens))*10), &r) == 1) {
                     //fmt.print("new alien blast\n")
                     newBlast := BlastPos{Rectangle{f32(a.position.x+(f32(alien.width)/1.5)), f32(a.position.y+f32(alien.height/2)), f32(alien.width), f32(alien.height)}, Vector2{f32(a.position.x+(f32(alien.width)/1.5)), f32(a.position.y+f32(alien.height/2))}, true}
                     append(&aBlasts, newBlast)
-                    a.blastDelay = 1.5
+                    a.blastDelay = 0.9 //shooting delay
                     break ab
                 }
+            }
+        }
+        //makes an alien start moving
+        ab2: for a, i in &aliens {
+            if (!a.moving) {
+                r := rand.create(u64(time.time_to_unix_nano(time.now())))
+                if (rand.int63_max(i64(f64(len(aliens))*10), &r) == 1) {
+                    a.moving = true
+                    break ab2
+                }
+            }
+        }
+        //adds new aliens to the screen
+        if (len(aliens) <= 3 && len(aliens) > 0) {
+            //fmt.print("new alien\n")
+            r := rand.create(u64(time.time_to_unix_nano(time.now())))
+            rint := rand.int63_max(i64(len(aliens)*50), &r)
+            if (rint == 1) {
+                nAlien := Alien{Rectangle{}, Vector2{clamp(baseAlienPos.x + f32(rand.int63_max(i64(screenWidth-alien.width), &r)), f32(0), f32(screenWidth - alien.width)), clamp(f32(rand.int63_max(i64(200-alien.height), &r)), f32(0), f32(200))}, 0.1, true, false, 2}
+                append(&aliens, nAlien)
             }
         }
     }

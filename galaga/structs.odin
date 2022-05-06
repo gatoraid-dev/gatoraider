@@ -7,6 +7,8 @@ Alien :: struct {
     position: raylib.Vector2,
     blastDelay: f32,
     enabled: bool,
+    moving: bool,
+    lives: int,
 }
 BlastPos :: struct {
     collisionBox: raylib.Rectangle,
@@ -20,4 +22,5 @@ Ship :: struct {
     speed: f32,
     lives: int,
     blastDelay:f32,
+    score: int,
 }
