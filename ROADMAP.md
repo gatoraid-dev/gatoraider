@@ -1,6 +1,6 @@
 ## This is the roadmap of the various games that I'll be (attempting) to re/create, in no particular order.
 
-- [ ] Galaga
+- [X] Galaga
 - [ ] Snake
 - [ ] Mario ~~teaches typing~~
 - [ ] Pacman
